@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// Allows you to interact with the DB
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Can have only one db datasource
+datasource db {
+  provider = "mongodb" // name of the db using
+  url      = env("DATABASE_URL") // connection string of DB
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String @unique // Field level attribute
+  password  String
+  posts   Post?
+  role Role @default(BASIC)
+
+// Block level attributes
+  @@unique([name, password]) // cannot have 2 users with same name and same password
+  @@index([name]) // This will help for adding index on fields for optmising the query
+  // CompositeID
+  // @@id([name, email])
+}
+
+model Post {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  slug    String
+  title   String
+  body    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  rating  Float
+  user    User   @relation(fields: [userId], references: [id])
+  userId  String @unique @db.ObjectId // relation scalar field (used in the `@relation` attribute above)
+}
+
+enum Role {
+  BASIC
+  EDITOR
+  ADMIN
+}
